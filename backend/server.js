@@ -1,4 +1,8 @@
 require("dotenv").config();
+const Subject = require("./models/Subject");
+const Resource = require("./models/Resource");
+const Assignment = require("./models/Assignment");
+const Announcement = require("./models/Announcement");
 const mongoose = require("mongoose");
 const express = require("express");
 const app = express();
@@ -13,39 +17,47 @@ app.get("/", (req, res) => {
   res.send("College Resource Hub backend is running!");
 });
 
-app.get("/api/subjects", (req, res) => {
-  const subjects = [
-    { id: 1, name: "Data Structures", semester: 4 },
-    { id: 2, name: "DBMS", semester: 4 },
-    { id: 3, name: "Operating Systems", semester: 4 },
-    { id: 4, name: "Computer Networks", semester: 4} 
-  ];
-  // This needs to be right here to close out the subjects route!
-  res.json(subjects);
+app.get("/api/subjects", async (req, res) => {
+  try {
+    const subjects = await Subject.find();
+    res.json(subjects);
+  } catch (error) {
+    console.error("Error fetching subjects:", error);
+    res.status(500).json({ message: "Failed to fetch subjects" });
+  }
 });
 
-app.get("/api/resources", (req, res) => {
-  const resources = [
-    { id: 1, title: "Data Structures Notes", subject: "Data Structures", unit: "Unit 2" },
-    { id: 2, title: "DBMS ER Diagram Guide", subject: "DBMS", unit: "Unit 1" }
-  ];
-  res.json(resources);
+// Get all resources
+app.get('/api/resources', async (req, res) => {
+  try {
+    const resources = await Resource.find();
+    res.json(resources);
+  } catch (err) {
+      console.error("Error fetching resources:", error);
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.get("/api/assignments", (req, res) => {
-  const assignments = [
-    { id: 1, title: "DBMS Assignment 1 - ER Diagrams", subject: "DBMS", deadline: "2026-09-20" },
-    { id: 2, title: "Data Structures - Linked List Implementation", subject: "Data Structures", deadline: "2026-09-25" }
-  ];
-  res.json(assignments);
+// Get all assignments
+app.get('/api/assignments', async (req, res) => {
+  try {
+    const assignments = await Assignment.find();
+    res.json(assignments);
+  } catch (err) {
+      console.error("Error fetching assignments:", error);
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.get("/api/announcements", (req, res) => {
-  const announcements = [
-    { id: 1, title: "Semester Exam Timetable Released", date: "2026-09-09" },
-    { id: 2, title: "College Fest Registrations Open", date: "2026-09-05" }
-  ];
-  res.json(announcements);
+// Get all announcements
+app.get('/api/announcements', async (req, res) => {
+  try {
+    const announcements = await Announcement.find();
+    res.json(announcements);
+  } catch (err) {
+      console.error("Error fetching announcements:", error);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 app.listen(PORT, () => {
