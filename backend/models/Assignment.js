@@ -1,11 +1,10 @@
+// models/Assignment.js
 const mongoose = require("mongoose");
 
 const assignmentSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  subject: { type: String, required: true },
-  deadline: { type: String, required: true }
+  title: { type: String, required: true, trim: true },
+  subject: { type: String, required: true, trim: true },
+  deadline: { type: String, required: true } // stored as "YYYY-MM-DD" text so it sorts correctly
 });
 
-const Assignment = mongoose.model("Assignment", assignmentSchema);
-
-module.exports = Assignment;
+module.exports = mongoose.model("Assignment", assignmentSchema);

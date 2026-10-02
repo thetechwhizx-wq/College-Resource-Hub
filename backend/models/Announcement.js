@@ -1,10 +1,9 @@
+// models/Announcement.js
 const mongoose = require("mongoose");
 
 const announcementSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  date: { type: String, required: true }
+  title: { type: String, required: true, trim: true },
+  date: { type: String, required: true } // "YYYY-MM-DD"
 });
 
-const Announcement = mongoose.model("Announcement", announcementSchema);
-
-module.exports = Announcement;
+module.exports = mongoose.model("Announcement", announcementSchema);

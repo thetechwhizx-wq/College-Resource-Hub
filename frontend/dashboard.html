@@ -3,24 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard - College Resource Hub</title>
+  <title>Dashboard - College Resource Hub</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-
-  <header>
-    <h1>Student Dashboard</h1>
-    <p>Welcome back! Pick a section below.</p>
-  </header>
-
-  <main>
-    <nav class="dashboard-nav">
-      <a href="resources.html" class="btn">Resources</a>
-      <a href="assignments.html" class="btn">Assignments</a>
-      <a href="announcements.html" class="btn">Announcements</a>
+<body data-page="dashboard">
+  <header class="navbar">
+    <div class="nav-brand">College Resource Hub</div>
+    <nav class="nav-links">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="resources.html" >Resources</a>
+      <a href="assignments.html" >Assignments</a>
+      <a href="announcements.html" >Announcements</a>
+      <a href="calendar.html" >Calendar</a>
+      <a href="bookmarks.html" >Bookmarks</a>
+      <a href="admin-dashboard.html" class="admin-only ">Admin Panel</a>
     </nav>
-  </main>
+    <div class="nav-user">
+      <span id="navUserName"></span>
+      <button id="logoutBtn" class="btn btn-small">Logout</button>
+    </div>
+  </header>
+  <main class="container">
+    <h1 class="page-title">Welcome, <span id="welcomeName"></span></h1>
+    <p class="page-subtitle">Here is a quick look at what is available.</p>
 
+    <div class="stats-grid">
+      <div class="card stat-card"><div class="stat-number" id="statSubjects">-</div><div class="stat-label">Subjects</div></div>
+      <div class="card stat-card"><div class="stat-number" id="statResources">-</div><div class="stat-label">Resources</div></div>
+      <div class="card stat-card"><div class="stat-number" id="statAssignments">-</div><div class="stat-label">Assignments</div></div>
+      <div class="card stat-card"><div class="stat-number" id="statAnnouncements">-</div><div class="stat-label">Announcements</div></div>
+    </div>
+
+    <h2 class="section-title">Latest Announcements</h2>
+    <div id="latestAnnouncements" class="list"><p class="empty">Loading...</p></div>
+
+    <h2 class="section-title">Upcoming Assignments</h2>
+    <div id="upcomingAssignments" class="grid"><p class="empty">Loading...</p></div>
+
+    <h2 class="section-title">Upcoming on the Academic Calendar</h2>
+    <div id="upcomingCalendar" class="list"><p class="empty">Loading...</p></div>
+  </main>
   <script src="js/script.js"></script>
 </body>
 </html>

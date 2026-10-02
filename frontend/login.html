@@ -6,33 +6,73 @@
   <title>Login - College Resource Hub</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-
-  <header>
-    <h1>Login</h1>
-  </header>
-
-  <main>
-    <form id="loginForm">
-      <div>
-        <label for="email">Email</label><br>
-        <input type="email" id="email" required>
+<body data-page="login">
+  <div class="login-wrapper">
+    <div class="card login-card">
+      <div class="tab-switch">
+        <button type="button" id="tabLoginBtn" class="tab-btn active">Login</button>
+        <button type="button" id="tabRegisterBtn" class="tab-btn">Create Account</button>
       </div>
-      <div>
-        <label for="password">Password</label><br>
-        <input type="password" id="password" required>
-      </div>
-      <div>
-        <label for="role">I am a:</label><br>
-        <select id="role">
-          <option value="student">Student</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <button type="submit" class="btn">Login</button>
-    </form>
-  </main>
 
+      <!-- LOGIN FORM -->
+      <div id="loginPanel">
+        <h2>Login</h2>
+        <div id="loginMessage" class="message"></div>
+        <form id="loginForm">
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="you@college.edu" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Your password" required>
+          </div>
+          <button type="submit" class="btn">Login</button>
+        </form>
+        <div class="demo-box">
+          <strong>Demo accounts</strong><br>
+          Admin: admin@college.edu / admin123<br>
+          Student: student@college.edu / student123
+        </div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerPanel" class="hidden">
+        <h2>Create Account</h2>
+        <div id="registerMessage" class="message"></div>
+        <form id="registerForm">
+          <div class="field">
+            <label for="regName">Full name</label>
+            <input type="text" id="regName" required>
+          </div>
+          <div class="field">
+            <label for="regEmail">Email</label>
+            <input type="email" id="regEmail" placeholder="you@college.edu" required>
+          </div>
+          <div class="field">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" minlength="6" placeholder="At least 6 characters" required>
+          </div>
+          <div class="field">
+            <label for="regRole">I am a</label>
+            <select id="regRole">
+              <option value="student">Student</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="field hidden" id="adminCodeField">
+            <label for="regAdminCode">Admin signup code</label>
+            <input type="text" id="regAdminCode" placeholder="Given by your project guide/instructor">
+          </div>
+          <button type="submit" class="btn">Create Account</button>
+        </form>
+        <div class="demo-box">
+          Registering as Admin requires an admin signup code (set in backend/.env as ADMIN_SIGNUP_CODE)
+          so random visitors cannot grant themselves admin access.
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="js/script.js"></script>
 </body>
 </html>

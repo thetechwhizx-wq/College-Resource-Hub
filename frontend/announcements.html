@@ -6,18 +6,28 @@
   <title>Announcements - College Resource Hub</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-
-  <header>
-    <h1>Announcements</h1>
+<body data-page="announcements">
+  <header class="navbar">
+    <div class="nav-brand">College Resource Hub</div>
+    <nav class="nav-links">
+      <a href="dashboard.html" >Dashboard</a>
+      <a href="resources.html" >Resources</a>
+      <a href="assignments.html" >Assignments</a>
+      <a href="announcements.html" class="active">Announcements</a>
+      <a href="calendar.html" >Calendar</a>
+      <a href="bookmarks.html" >Bookmarks</a>
+      <a href="admin-dashboard.html" class="admin-only ">Admin Panel</a>
+    </nav>
+    <div class="nav-user">
+      <span id="navUserName"></span>
+      <button id="logoutBtn" class="btn btn-small">Logout</button>
+    </div>
   </header>
-
-  <main>
-    <div id = "announcementsList"></div>
-
-    <a href="dashboard.html" class="btn back-link">Back to Dashboard</a>
+  <main class="container">
+    <h1 class="page-title">Announcements</h1>
+    <p class="page-subtitle">Newest first.</p>
+    <div id="announcementList" class="list"><p class="empty">Loading...</p></div>
   </main>
-
   <script src="js/script.js"></script>
 </body>
 </html>
