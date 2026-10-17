@@ -53,17 +53,97 @@ function requireLogin(requiredRole) {
   return true;
 }
 
+// ---------- App shell: sidebar + top bar are built here so every page shares ONE navigation ----------
+const ICONS = {
+  dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  clip: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  bookmark: '<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+  admin: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>',
+  sun: '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  cap: '<path d="M22 10L12 5 2 10l10 5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>'
+};
+
+function icon(name) {
+  return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + "</svg>";
+}
+
+const NAV_ITEMS = [
+  { page: "dashboard", href: "dashboard.html", label: "Dashboard", icon: "dashboard" },
+  { page: "resources", href: "resources.html", label: "Resources", icon: "book" },
+  { page: "assignments", href: "assignments.html", label: "Assignments", icon: "clip" },
+  { page: "announcements", href: "announcements.html", label: "Announcements", icon: "bell" },
+  { page: "calendar", href: "calendar.html", label: "Calendar", icon: "calendar" },
+  { page: "bookmarks", href: "bookmarks.html", label: "Bookmarks", icon: "bookmark" },
+  { page: "admin", href: "admin-dashboard.html", label: "Admin Panel", icon: "admin", adminOnly: true }
+];
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("theme", theme);
+}
+
 function setupNav() {
   const user = getUser();
-  const nameEl = document.getElementById("navUserName");
-  if (nameEl && user) nameEl.textContent = user.name + " (" + user.role + ")";
+  const page = document.body.dataset.page;
+  const sidebar = document.getElementById("sidebar");
+  const topbar = document.getElementById("topbar");
+  if (!sidebar || !topbar || !user) return;
 
-  document.querySelectorAll(".admin-only").forEach(function (el) {
-    el.style.display = user && user.role === "admin" ? "inline-block" : "none";
+  const isAdmin = user.role === "admin";
+  const initials = user.name.split(" ").map(function (w) { return w[0]; }).slice(0, 2).join("").toUpperCase();
+  let title = "";
+
+  const links = NAV_ITEMS
+    .filter(function (item) { return !item.adminOnly || isAdmin; })
+    .map(function (item) {
+      if (item.page === page) title = item.label;
+      return '<a class="side-link' + (item.page === page ? " active" : "") + '" href="' + item.href + '">' + icon(item.icon) + "<span>" + item.label + "</span></a>";
+    })
+    .join("");
+
+  sidebar.innerHTML =
+    '<div class="brand"><div class="brand-logo">' + icon("cap") + '</div><div>College Hub<small>Resource Portal</small></div></div>' +
+    '<nav class="side-nav">' + links + "</nav>" +
+    '<div class="side-footer">' +
+      '<div class="user-chip"><div class="avatar">' + escapeHtml(initials) + '</div><div class="user-meta"><strong id="navUserName">' + escapeHtml(user.name) + "</strong><span>" + escapeHtml(user.role) + "</span></div></div>" +
+      '<button id="logoutBtn" class="btn btn-ghost btn-small btn-block">' + icon("logout") + " Logout</button>" +
+    "</div>";
+
+  const dark = document.documentElement.dataset.theme === "dark";
+  topbar.innerHTML =
+    '<button id="menuBtn" class="icon-btn menu-btn" aria-label="Open menu">' + icon("menu") + "</button>" +
+    '<div class="topbar-title">' + escapeHtml(title) + "</div>" +
+    '<button id="themeBtn" class="icon-btn" aria-label="Toggle dark mode">' + icon(dark ? "sun" : "moon") + "</button>";
+
+  // Mobile: slide the sidebar in/out
+  let overlay = document.getElementById("sidebarOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "sidebarOverlay";
+    overlay.className = "overlay";
+    document.body.appendChild(overlay);
+  }
+  function setMenu(open) {
+    sidebar.classList.toggle("open", open);
+    overlay.classList.toggle("show", open);
+  }
+  document.getElementById("menuBtn").addEventListener("click", function () { setMenu(true); });
+  overlay.addEventListener("click", function () { setMenu(false); });
+
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    this.innerHTML = icon(next === "dark" ? "sun" : "moon");
   });
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.addEventListener("click", logout);
+  document.getElementById("logoutBtn").addEventListener("click", logout);
 }
 
 // Wrapper around fetch(): adds the JWT header, handles errors in ONE place.
@@ -133,6 +213,116 @@ function showLoadError(container, err) {
   container.innerHTML = '<p class="empty">' + escapeHtml(err.message) + "</p>";
 }
 
+// Small pop-up message in the corner (replaces ugly alert() boxes)
+function toast(message, type) {
+  let box = document.getElementById("toastBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "toastBox";
+    document.body.appendChild(box);
+  }
+  const el = document.createElement("div");
+  el.className = "toast " + (type || "info");
+  el.textContent = message;
+  box.appendChild(el);
+  function close() {
+    el.classList.add("leaving");
+    setTimeout(function () { el.remove(); }, 300);
+  }
+  el.addEventListener("click", close);
+  setTimeout(close, 3500);
+}
+
+// Numbers count up from 0 to their value (a small "wow" touch on dashboards)
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  target = Number(target) || 0;
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || target === 0) { el.textContent = target; return; }
+  const duration = 800;
+  const startTime = performance.now();
+  function frame(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out: fast start, slow finish
+    el.textContent = Math.round(target * eased);
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// Elements with class "reveal" fade in when they scroll into view
+function initReveal() {
+  const items = document.querySelectorAll(".reveal");
+  if (!items.length) return;
+  if (!("IntersectionObserver" in window)) {
+    items.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  const observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  items.forEach(function (el, i) {
+    el.style.transitionDelay = (i % 3) * 90 + "ms";
+    observer.observe(el);
+  });
+}
+
+// PDFs are protected by the login token, so a plain <a href> cannot open them.
+// Instead we fetch the file WITH the token, turn it into a temporary blob URL and open that.
+document.addEventListener("click", async function (event) {
+  const btn = event.target.closest("[data-file-id]");
+  if (!btn) return;
+  const win = window.open("", "_blank"); // open the tab right away so popup blockers allow it
+  try {
+    const response = await fetch(API_BASE + "/api/files/" + btn.dataset.fileId, {
+      headers: { Authorization: "Bearer " + getToken() }
+    });
+    if (!response.ok) throw new Error("Could not load the PDF.");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    if (win) win.location.href = url; else window.location.href = url;
+  } catch (err) {
+    if (win) win.close();
+    toast(err.message, "error");
+  }
+});
+
+// Reads the PDF chosen in the admin form, validates it, uploads it, and returns { id, name } (or null if none chosen)
+async function uploadSelectedPdf() {
+  const input = document.getElementById("resourceFile");
+  const file = input && input.files[0];
+  if (!file) return null;
+  if (!file.name.toLowerCase().endsWith(".pdf")) throw new Error("Only PDF files are allowed.");
+  if (file.size > 5 * 1024 * 1024) throw new Error("PDF is too large (max 5 MB).");
+
+  const base64 = await new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result).split(",")[1]); }; // drop the "data:...;base64," prefix
+    reader.onerror = function () { reject(new Error("Could not read the file.")); };
+    reader.readAsDataURL(file);
+  });
+  return apiFetch("/api/files", { method: "POST", body: JSON.stringify({ name: file.name, data: base64 }) });
+}
+
+// "Open link" and "View PDF" buttons for a resource (shared by Resources + Bookmarks pages)
+function resourceOpenButtons(r) {
+  const link = safeUrl(r.link);
+  let html = "";
+  if (r.fileId) {
+    html += '<button class="btn" data-file-id="' + escapeHtml(r.fileId) + '" data-view-id="' + r._id + '">' + icon("file") + " View PDF</button>";
+  }
+  if (link) {
+    html += '<a class="btn ' + (r.fileId ? "btn-ghost" : "") + '" href="' + escapeHtml(link) + '" target="_blank" rel="noopener" data-view-id="' + r._id + '">Open link</a>';
+  }
+  return html || '<span class="item-meta">No file or link added</span>';
+}
+
 // =====================================================
 // 3. HTML BUILDERS (turn one data item into a card)
 // =====================================================
@@ -140,10 +330,7 @@ function showLoadError(container, err) {
 // bookmarkedIds: a Set of resource _id strings the current user already saved.
 // Used so the Resources page can show a filled-in star on cards already bookmarked.
 function resourceCardHtml(r, bookmarkedIds) {
-  const link = safeUrl(r.link);
-  const openBtn = link
-    ? '<a class="btn" href="' + escapeHtml(link) + '" target="_blank" rel="noopener" data-view-id="' + r._id + '">Open / Download</a>'
-    : '<span class="item-meta">No link added</span>';
+  const openBtn = resourceOpenButtons(r);
 
   const isSaved = bookmarkedIds && bookmarkedIds.has(r._id);
   const bookmarkBtn =
@@ -170,10 +357,7 @@ function resourceCardHtml(r, bookmarkedIds) {
 
 // Bookmarks page: same info, but the action is "Remove" instead of a save toggle
 function bookmarkCardHtml(r) {
-  const link = safeUrl(r.link);
-  const openBtn = link
-    ? '<a class="btn" href="' + escapeHtml(link) + '" target="_blank" rel="noopener" data-view-id="' + r._id + '">Open / Download</a>'
-    : '<span class="item-meta">No link added</span>';
+  const openBtn = resourceOpenButtons(r);
   return (
     '<div class="card">' +
       '<div class="item-title">' + escapeHtml(r.title) + "</div>" +
@@ -229,6 +413,8 @@ function sortCalendarEvents(list) { return list.slice().sort(function (a, b) { r
 
 function renderCards(container, items, builder, emptyText) {
   container.innerHTML = items.length ? items.map(builder).join("") : '<p class="empty">' + escapeHtml(emptyText) + "</p>";
+  // Each card gets a small delay (--i) so they fade in one after another instead of all at once
+  Array.from(container.children).forEach(function (el, i) { el.style.setProperty("--i", Math.min(i, 12)); });
 }
 
 // Fires a "view" ping to the server whenever an "Open / Download" link is clicked, for analytics.
@@ -332,10 +518,10 @@ async function initDashboardPage() {
     ]);
     const subjects = results[0], resources = results[1], assignments = results[2], announcements = results[3], events = results[4];
 
-    document.getElementById("statSubjects").textContent = subjects.length;
-    document.getElementById("statResources").textContent = resources.length;
-    document.getElementById("statAssignments").textContent = assignments.length;
-    document.getElementById("statAnnouncements").textContent = announcements.length;
+    animateCount("statSubjects", subjects.length);
+    animateCount("statResources", resources.length);
+    animateCount("statAssignments", assignments.length);
+    animateCount("statAnnouncements", announcements.length);
 
     renderCards(announcementBox, sortAnnouncements(announcements).slice(0, 3), announcementCardHtml, "No announcements yet.");
 
@@ -427,7 +613,7 @@ async function initResourcesPage() {
       }
       applyResourceFilters(); // redraw so the star updates
     } catch (err) {
-      alert(err.message);
+      toast(err.message, "error");
     }
   });
 
@@ -463,7 +649,7 @@ async function initResourcesPage() {
         })
       });
       modal.classList.add("hidden");
-      alert("Thanks — your report was sent to the admin.");
+      toast("Thanks — your report was sent to the admin.", "success");
     } catch (err) {
       showMessage(reportMessage, err.message, "error");
     }
@@ -532,7 +718,7 @@ async function initBookmarksPage() {
       await apiFetch("/api/bookmarks/" + btn.dataset.bookmarkId, { method: "DELETE" });
       await load(); // reload the list so the removed card disappears
     } catch (err) {
-      alert(err.message);
+      toast(err.message, "error");
     }
   });
 
@@ -542,7 +728,7 @@ async function initBookmarksPage() {
 // =====================================================
 // 9. ADMIN DASHBOARD (content CRUD + calendar CRUD + reports + analytics)
 // =====================================================
-function showAdminMessage(text, type) { showMessage(document.getElementById("adminMessage"), text, type); }
+function showAdminMessage(text, type) { toast(text, type); }
 
 function fillSubjectSelect(selectId, subjects) {
   const select = document.getElementById(selectId);
@@ -586,7 +772,10 @@ async function loadAdminData() {
 
     fillTable("resourceRows", resources.map(function (r) {
       const link = safeUrl(r.link);
-      const linkCell = link ? '<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener">Open</a>' : "-";
+      const parts = [];
+      if (r.fileId) parts.push('<span class="badge">PDF</span>');
+      if (link) parts.push('<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener">Link</a>');
+      const linkCell = parts.length ? parts.join(" ") : "-";
       return "<tr><td>" + escapeHtml(r.title) + "</td><td>" + escapeHtml(r.subject) + "</td><td>" + escapeHtml(r.semester || "-") + "</td><td>" +
         escapeHtml(r.unit) + "</td><td>" + escapeHtml(r.type) + "</td><td>" + escapeHtml(r.views) + "</td><td>" + linkCell + "</td><td>" +
         deleteButtonHtml("resources", r._id) + "</td></tr>";
@@ -622,11 +811,11 @@ async function loadAdminData() {
 async function loadAnalytics() {
   try {
     const a = await apiFetch("/api/analytics");
-    document.getElementById("anStudents").textContent = a.totals.students;
-    document.getElementById("anResources").textContent = a.totals.resources;
-    document.getElementById("anViews").textContent = a.totals.totalViews;
-    document.getElementById("anBookmarks").textContent = a.totals.totalBookmarks;
-    document.getElementById("anOpenReports").textContent = a.openReports;
+    animateCount("anStudents", a.totals.students);
+    animateCount("anResources", a.totals.resources);
+    animateCount("anViews", a.totals.totalViews);
+    animateCount("anBookmarks", a.totals.totalBookmarks);
+    animateCount("anOpenReports", a.openReports);
 
     document.getElementById("topResourcesBars").innerHTML = buildBarChart(
       a.topResources.map(function (r) { return { label: r.title, value: r.views }; }),
@@ -668,7 +857,7 @@ function setupAddForm(formId, endpoint, buildBody) {
   form.addEventListener("submit", async function (event) {
     event.preventDefault();
     try {
-      await apiFetch(endpoint, { method: "POST", body: JSON.stringify(buildBody(form)) });
+      await apiFetch(endpoint, { method: "POST", body: JSON.stringify(await buildBody(form)) });
       form.reset();
       setDefaultDates();
       showAdminMessage("Added successfully.", "success");
@@ -687,7 +876,8 @@ async function initAdminPage() {
   setupAddForm("subjectForm", "/api/subjects", function (f) {
     return { name: f.elements["name"].value, semester: Number(f.elements["semester"].value) };
   });
-  setupAddForm("resourceForm", "/api/resources", function (f) {
+  setupAddForm("resourceForm", "/api/resources", async function (f) {
+    const uploaded = await uploadSelectedPdf(); // null when no PDF was chosen
     // Auto-fill semester from the chosen subject's <option data-semester="..."> so it always matches the Subject.
     const subjectSelect = document.getElementById("resourceSubject");
     const chosenOption = subjectSelect.options[subjectSelect.selectedIndex];
@@ -697,7 +887,9 @@ async function initAdminPage() {
       semester: chosenOption ? Number(chosenOption.dataset.semester) : null,
       unit: f.elements["unit"].value,
       type: f.elements["type"].value,
-      link: f.elements["link"].value
+      link: f.elements["link"].value,
+      fileId: uploaded ? uploaded.id : undefined,
+      fileName: uploaded ? uploaded.name : ""
     };
   });
   setupAddForm("assignmentForm", "/api/assignments", function (f) {
@@ -747,6 +939,7 @@ async function initAdminPage() {
 // =====================================================
 document.addEventListener("DOMContentLoaded", function () {
   const page = document.body.dataset.page;
+  initReveal();
 
   if (page === "home") return;
   if (page === "login") { initLoginPage(); return; }

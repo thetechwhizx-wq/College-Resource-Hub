@@ -2,7 +2,7 @@
 // Study material (notes, PDFs, videos) that belongs to a subject.
 const mongoose = require("mongoose");
 
-const RESOURCE_TYPES = ["Notes", "PDF", "PPT", "Video", "Question Paper", "Other"];
+const RESOURCE_TYPES = ["Notes", "PDF", "PPT", "Video", "Question Paper", "Result", "Other"];
 
 const resourceSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },   // e.g. "Unit 1 Notes"
@@ -14,6 +14,8 @@ const resourceSchema = new mongoose.Schema({
   unit: { type: String, default: "", trim: true },       // e.g. "Unit 1"
   type: { type: String, enum: RESOURCE_TYPES, default: "Notes" },
   link: { type: String, default: "", trim: true },       // optional Google Drive / website URL
+  fileId: { type: mongoose.Schema.Types.ObjectId, ref: "UploadedFile" }, // optional uploaded PDF
+  fileName: { type: String, default: "" },               // its original name
   views: { type: Number, default: 0 }                    // how many times a student opened this resource
 });
 

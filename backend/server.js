@@ -18,6 +18,7 @@ const User = require("./models/User");
 const Bookmark = require("./models/Bookmark");
 const CalendarEvent = require("./models/CalendarEvent");
 const Report = require("./models/Report");
+const UploadedFile = require("./models/UploadedFile");
 
 // Security guards (middleware)
 const { verifyToken, adminOnly, getSecret } = require("./middleware/auth");
@@ -33,7 +34,7 @@ function getAdminSignupCode() {
 
 // ---------- GLOBAL MIDDLEWARE ----------
 app.use(cors());          // lets a page served from another port (e.g. Live Server :5500) call this API
-app.use(express.json());  // lets us read JSON sent in request bodies (req.body)
+app.use(express.json({ limit: "8mb" })); // read JSON bodies; 8 MB leaves room for a 5 MB PDF sent as base64 text
 
 // Serve the frontend folder too. That means the whole app can be opened at
 // http://localhost:3000  - no Live Server needed (handy for the viva demo).
@@ -152,6 +153,59 @@ function createCrudRoutes(basePath, Model) {
     }
   });
 }
+
+// ---------- PDF FILES (notes, results...) ----------
+const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per PDF
+
+// POST /api/files   body: { name, data }   (data = the PDF as base64 text) - admin only
+app.post("/api/files", verifyToken, adminOnly, async (req, res) => {
+  try {
+    const name = String(req.body.name || "document.pdf").slice(0, 150);
+    const buffer = Buffer.from(String(req.body.data || ""), "base64");
+
+    if (!buffer.length) return res.status(400).json({ message: "No file received." });
+    if (buffer.length > MAX_FILE_BYTES) return res.status(413).json({ message: "PDF is too large (max 5 MB)." });
+    // Every real PDF starts with the text "%PDF" - this stops other file types being sneaked in
+    if (buffer.slice(0, 4).toString() !== "%PDF") {
+      return res.status(400).json({ message: "Only valid PDF files are allowed." });
+    }
+
+    const saved = await UploadedFile.create({ name: name, size: buffer.length, data: buffer });
+    res.status(201).json({ id: saved._id, name: saved.name, size: saved.size });
+  } catch (err) {
+    console.error("Upload error:", err.message);
+    res.status(500).json({ message: "Could not save the file." });
+  }
+});
+
+// GET /api/files/:id - any logged-in user can view a PDF
+app.get("/api/files/:id", verifyToken, async (req, res) => {
+  try {
+    const file = await UploadedFile.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "File not found." });
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "inline; filename*=UTF-8''" + encodeURIComponent(file.name)
+    });
+    res.send(file.data);
+  } catch (err) {
+    res.status(400).json({ message: "Could not load the file." });
+  }
+});
+
+// Deleting a resource also removes its PDF and any bookmarks pointing at it.
+// (Registered BEFORE the generic CRUD routes, so Express uses this one for resources.)
+app.delete("/api/resources/:id", verifyToken, adminOnly, async (req, res) => {
+  try {
+    const deleted = await Resource.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Item not found." });
+    if (deleted.fileId) await UploadedFile.findByIdAndDelete(deleted.fileId);
+    await Bookmark.deleteMany({ resource: deleted._id });
+    res.json({ message: "Deleted successfully." });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
 createCrudRoutes("/api/subjects", Subject);
 createCrudRoutes("/api/resources", Resource);
@@ -311,12 +365,21 @@ app.get("/api/analytics", verifyToken, adminOnly, async (req, res) => {
   }
 });
 
+// ---------- ERROR HANDLER (always answer with JSON, never an HTML error page) ----------
+app.use((err, req, res, next) => {
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({ message: "File is too large (max 5 MB)." });
+  }
+  console.error("Unhandled error:", err.message);
+  res.status(err.status || 500).json({ message: "Server error." });
+});
+
 // ---------- AUTO-SEED DEFAULT USERS ----------
 // Runs once each time the server connects to MongoDB.
 // It only creates an account if that email does not exist yet, so it is safe to run repeatedly.
 async function seedDefaultUsers() {
   const defaultUsers = [
-    { name: "Admin", email: "admin@college.edu", password: "admin123", role: "admin" },
+    { name: "Admin", email: "admin@college.edu", password: process.env.ADMIN_PASSWORD || "admin123", role: "admin" },
     { name: "Student", email: "student@college.edu", password: "student123", role: "student" }
   ];
 
@@ -325,6 +388,11 @@ async function seedDefaultUsers() {
     if (!alreadyExists) {
       await User.create(u); // the password gets hashed by the pre-save hook in User.js
       console.log("Seeded default " + u.role + ": " + u.email);
+    } else if (u.role === "admin" && process.env.ADMIN_PASSWORD) {
+      // If ADMIN_PASSWORD is set in the environment, keep the admin's password in sync with it.
+      // That lets you replace the public demo password without touching the database by hand.
+      alreadyExists.password = process.env.ADMIN_PASSWORD;
+      await alreadyExists.save();
     }
   }
 }

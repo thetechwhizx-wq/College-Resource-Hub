@@ -4,155 +4,144 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - College Resource Hub</title>
+  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="admin">
-  <header class="navbar">
-    <div class="nav-brand">College Resource Hub</div>
-    <nav class="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="resources.html">Resources</a>
-      <a href="assignments.html">Assignments</a>
-      <a href="announcements.html">Announcements</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="bookmarks.html">Bookmarks</a>
-      <a href="admin-dashboard.html" class="admin-only active">Admin Panel</a>
-    </nav>
-    <div class="nav-user">
-      <span id="navUserName"></span>
-      <button id="logoutBtn" class="btn btn-small">Logout</button>
-    </div>
-  </header>
-  <main class="container">
-    <h1 class="page-title">Admin Panel</h1>
-    <p class="page-subtitle">Manage content, review reports and view resource usage analytics.</p>
+<div class="app">
+  <aside id="sidebar" class="sidebar"></aside>
+  <div class="main">
+    <header id="topbar" class="topbar"></header>
+    <main class="content">
+      <h1 class="page-title">Admin Panel</h1>
+      <p class="page-subtitle">Manage content, upload PDFs, review reports and view resource usage analytics.</p>
 
-    <div class="admin-subnav">
-      <a href="#content-section">Content</a>
-      <a href="#calendar-section">Calendar Events</a>
-      <a href="#reports-section">Reports</a>
-      <a href="#analytics-section">Analytics</a>
-    </div>
-
-    <div id="adminMessage" class="message"></div>
-
-    <!-- ================= CONTENT ================= -->
-    <div id="content-section">
-      <!-- SUBJECTS -->
-      <h2 class="section-title">Subjects</h2>
-      <div class="card">
-        <form id="subjectForm" class="form-grid">
-          <div><label>Subject name</label><input name="name" required placeholder="Data Structures"></div>
-          <div><label>Semester (1-8)</label><input name="semester" type="number" min="1" max="8" required></div>
-          <div><button type="submit" class="btn">Add Subject</button></div>
-        </form>
-        <div class="table-wrap">
-          <table><thead><tr><th>Name</th><th>Semester</th><th>Action</th></tr></thead>
-          <tbody id="subjectRows"></tbody></table>
-        </div>
+      <div class="admin-subnav">
+        <a href="#content-section">Content</a>
+        <a href="#calendar-section">Calendar Events</a>
+        <a href="#reports-section">Reports</a>
+        <a href="#analytics-section">Analytics</a>
       </div>
 
-      <!-- RESOURCES -->
-      <h2 class="section-title">Resources</h2>
-      <div class="card">
-        <form id="resourceForm" class="form-grid">
-          <div><label>Title</label><input name="title" required placeholder="Unit 1 Notes"></div>
-          <div><label>Subject</label><select id="resourceSubject" name="subject" required></select></div>
-          <div><label>Unit</label><input name="unit" placeholder="Unit 1"></div>
-          <div><label>Type</label>
-            <select name="type">
-              <option>Notes</option><option>PDF</option><option>PPT</option><option>Video</option><option>Question Paper</option><option>Other</option>
-            </select>
+      <!-- ================= CONTENT ================= -->
+      <div id="content-section">
+        <h2 class="section-title">Subjects</h2>
+        <div class="card">
+          <form id="subjectForm" class="form-grid">
+            <div><label>Subject name</label><input name="name" required placeholder="Data Structures"></div>
+            <div><label>Semester (1-8)</label><input name="semester" type="number" min="1" max="8" required></div>
+            <div><button type="submit" class="btn">Add Subject</button></div>
+          </form>
+          <div class="table-wrap">
+            <table><thead><tr><th>Name</th><th>Semester</th><th>Action</th></tr></thead>
+            <tbody id="subjectRows"></tbody></table>
           </div>
-          <div><label>Link (Drive / URL)</label><input name="link" type="url" placeholder="https://drive.google.com/..."></div>
-          <div><button type="submit" class="btn">Add Resource</button></div>
-        </form>
-        <div class="table-wrap">
-          <table><thead><tr><th>Title</th><th>Subject</th><th>Sem</th><th>Unit</th><th>Type</th><th>Views</th><th>Link</th><th>Action</th></tr></thead>
-          <tbody id="resourceRows"></tbody></table>
         </div>
-      </div>
 
-      <!-- ASSIGNMENTS -->
-      <h2 class="section-title">Assignments</h2>
-      <div class="card">
-        <form id="assignmentForm" class="form-grid">
-          <div><label>Title</label><input name="title" required placeholder="Assignment 1"></div>
-          <div><label>Subject</label><select id="assignmentSubject" name="subject" required></select></div>
-          <div><label>Deadline</label><input name="deadline" type="date" required></div>
-          <div><button type="submit" class="btn">Add Assignment</button></div>
-        </form>
-        <div class="table-wrap">
-          <table><thead><tr><th>Title</th><th>Subject</th><th>Deadline</th><th>Action</th></tr></thead>
-          <tbody id="assignmentRows"></tbody></table>
-        </div>
-      </div>
-
-      <!-- ANNOUNCEMENTS -->
-      <h2 class="section-title">Announcements</h2>
-      <div class="card">
-        <form id="announcementForm" class="form-grid">
-          <div><label>Title</label><input name="title" required placeholder="Exam schedule released"></div>
-          <div><label>Date</label><input id="announcementDate" name="date" type="date" required></div>
-          <div><button type="submit" class="btn">Add Announcement</button></div>
-        </form>
-        <div class="table-wrap">
-          <table><thead><tr><th>Title</th><th>Date</th><th>Action</th></tr></thead>
-          <tbody id="announcementRows"></tbody></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= CALENDAR EVENTS ================= -->
-    <div id="calendar-section">
-      <h2 class="section-title">Academic Calendar Events</h2>
-      <div class="card">
-        <form id="calendarForm" class="form-grid">
-          <div><label>Title</label><input name="title" required placeholder="Internal Exam 1 - DBMS"></div>
-          <div><label>Category</label>
-            <select name="category"><option>Exam</option><option>Assignment</option><option>Project</option><option>Other</option></select>
+        <h2 class="section-title">Resources (notes, results, PDFs)</h2>
+        <div class="card">
+          <form id="resourceForm" class="form-grid">
+            <div><label>Title</label><input name="title" required placeholder="Unit 1 Notes"></div>
+            <div><label>Subject</label><select id="resourceSubject" name="subject" required></select></div>
+            <div><label>Unit</label><input name="unit" placeholder="Unit 1"></div>
+            <div><label>Type</label>
+              <select name="type">
+                <option>Notes</option><option>PDF</option><option>PPT</option><option>Video</option><option>Question Paper</option><option>Result</option><option>Other</option>
+              </select>
+            </div>
+            <div><label>Upload PDF (optional, max 5 MB)</label><input id="resourceFile" type="file" accept="application/pdf,.pdf"></div>
+            <div><label>or Link (Drive / URL)</label><input name="link" type="url" placeholder="https://drive.google.com/..."></div>
+            <div><button type="submit" class="btn">Add Resource</button></div>
+          </form>
+          <div class="table-wrap">
+            <table><thead><tr><th>Title</th><th>Subject</th><th>Sem</th><th>Unit</th><th>Type</th><th>Views</th><th>Link / PDF</th><th>Action</th></tr></thead>
+            <tbody id="resourceRows"></tbody></table>
           </div>
-          <div><label>Date</label><input id="calendarDate" name="date" type="date" required></div>
-          <div><label>Description (optional)</label><input name="description" placeholder="Room / syllabus / notes"></div>
-          <div><button type="submit" class="btn">Add Event</button></div>
-        </form>
-        <div class="table-wrap">
-          <table><thead><tr><th>Title</th><th>Category</th><th>Date</th><th>Description</th><th>Action</th></tr></thead>
-          <tbody id="calendarRows"></tbody></table>
+        </div>
+
+        <h2 class="section-title">Assignments</h2>
+        <div class="card">
+          <form id="assignmentForm" class="form-grid">
+            <div><label>Title</label><input name="title" required placeholder="Assignment 1"></div>
+            <div><label>Subject</label><select id="assignmentSubject" name="subject" required></select></div>
+            <div><label>Deadline</label><input name="deadline" type="date" required></div>
+            <div><button type="submit" class="btn">Add Assignment</button></div>
+          </form>
+          <div class="table-wrap">
+            <table><thead><tr><th>Title</th><th>Subject</th><th>Deadline</th><th>Action</th></tr></thead>
+            <tbody id="assignmentRows"></tbody></table>
+          </div>
+        </div>
+
+        <h2 class="section-title">Announcements</h2>
+        <div class="card">
+          <form id="announcementForm" class="form-grid">
+            <div><label>Title</label><input name="title" required placeholder="Exam schedule released"></div>
+            <div><label>Date</label><input id="announcementDate" name="date" type="date" required></div>
+            <div><button type="submit" class="btn">Add Announcement</button></div>
+          </form>
+          <div class="table-wrap">
+            <table><thead><tr><th>Title</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="announcementRows"></tbody></table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- ================= REPORTS ================= -->
-    <div id="reports-section">
-      <h2 class="section-title">Resource Reports</h2>
-      <div class="card">
-        <p class="item-meta" style="margin-bottom:10px">Issues students have flagged on resources (outdated, incorrect, or unavailable).</p>
-        <div class="table-wrap">
-          <table><thead><tr><th>Resource</th><th>Reason</th><th>Comment</th><th>Reported by</th><th>Status</th><th>Action</th></tr></thead>
-          <tbody id="reportRows"></tbody></table>
+      <!-- ================= CALENDAR EVENTS ================= -->
+      <div id="calendar-section">
+        <h2 class="section-title">Academic Calendar Events</h2>
+        <div class="card">
+          <form id="calendarForm" class="form-grid">
+            <div><label>Title</label><input name="title" required placeholder="Internal Exam 1 - DBMS"></div>
+            <div><label>Category</label>
+              <select name="category"><option>Exam</option><option>Assignment</option><option>Project</option><option>Other</option></select>
+            </div>
+            <div><label>Date</label><input id="calendarDate" name="date" type="date" required></div>
+            <div><label>Description (optional)</label><input name="description" placeholder="Room / syllabus / notes"></div>
+            <div><button type="submit" class="btn">Add Event</button></div>
+          </form>
+          <div class="table-wrap">
+            <table><thead><tr><th>Title</th><th>Category</th><th>Date</th><th>Description</th><th>Action</th></tr></thead>
+            <tbody id="calendarRows"></tbody></table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- ================= ANALYTICS ================= -->
-    <div id="analytics-section">
-      <h2 class="section-title">Resource Usage Analytics</h2>
-      <div class="stats-grid">
-        <div class="card stat-card"><div class="stat-number" id="anStudents">-</div><div class="stat-label">Students</div></div>
-        <div class="card stat-card"><div class="stat-number" id="anResources">-</div><div class="stat-label">Resources</div></div>
-        <div class="card stat-card"><div class="stat-number" id="anViews">-</div><div class="stat-label">Total Resource Opens</div></div>
-        <div class="card stat-card"><div class="stat-number" id="anBookmarks">-</div><div class="stat-label">Total Bookmarks</div></div>
-        <div class="card stat-card"><div class="stat-number" id="anOpenReports">-</div><div class="stat-label">Open Reports</div></div>
+      <!-- ================= REPORTS ================= -->
+      <div id="reports-section">
+        <h2 class="section-title">Resource Reports</h2>
+        <div class="card">
+          <p class="item-meta">Issues students have flagged on resources (outdated, incorrect, or unavailable).</p>
+          <div class="table-wrap">
+            <table><thead><tr><th>Resource</th><th>Reason</th><th>Comment</th><th>Reported by</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="reportRows"></tbody></table>
+          </div>
+        </div>
       </div>
 
-      <h3 class="section-title">Most-viewed Resources</h3>
-      <div class="card"><div id="topResourcesBars">Loading...</div></div>
+      <!-- ================= ANALYTICS ================= -->
+      <div id="analytics-section">
+        <h2 class="section-title">Resource Usage Analytics</h2>
+        <div class="stats-grid">
+          <div class="card stat-card" style="--i:0"><div class="stat-icon i1"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></div><div><div class="stat-number" id="anStudents">0</div><div class="stat-label">Students</div></div></div>
+          <div class="card stat-card" style="--i:1"><div class="stat-icon i2"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div><div class="stat-number" id="anResources">0</div><div class="stat-label">Resources</div></div></div>
+          <div class="card stat-card" style="--i:2"><div class="stat-icon i3"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div><div><div class="stat-number" id="anViews">0</div><div class="stat-label">Total Opens</div></div></div>
+          <div class="card stat-card" style="--i:3"><div class="stat-icon i4"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div><div><div class="stat-number" id="anBookmarks">0</div><div class="stat-label">Bookmarks</div></div></div>
+          <div class="card stat-card" style="--i:4"><div class="stat-icon i5"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg></div><div><div class="stat-number" id="anOpenReports">0</div><div class="stat-label">Open Reports</div></div></div>
+        </div>
 
-      <h3 class="section-title">Resources per Subject</h3>
-      <div class="card"><div id="subjectBars">Loading...</div></div>
-    </div>
-  </main>
-  <script src="js/script.js"></script>
+        <h3 class="section-title">Most-viewed Resources</h3>
+        <div class="card"><div id="topResourcesBars">Loading...</div></div>
+
+        <h3 class="section-title">Resources per Subject</h3>
+        <div class="card"><div id="subjectBars">Loading...</div></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="js/script.js"></script>
 </body>
 </html>

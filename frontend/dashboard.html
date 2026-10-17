@@ -4,45 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - College Resource Hub</title>
+  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="dashboard">
-  <header class="navbar">
-    <div class="nav-brand">College Resource Hub</div>
-    <nav class="nav-links">
-      <a href="dashboard.html" class="active">Dashboard</a>
-      <a href="resources.html" >Resources</a>
-      <a href="assignments.html" >Assignments</a>
-      <a href="announcements.html" >Announcements</a>
-      <a href="calendar.html" >Calendar</a>
-      <a href="bookmarks.html" >Bookmarks</a>
-      <a href="admin-dashboard.html" class="admin-only ">Admin Panel</a>
-    </nav>
-    <div class="nav-user">
-      <span id="navUserName"></span>
-      <button id="logoutBtn" class="btn btn-small">Logout</button>
-    </div>
-  </header>
-  <main class="container">
-    <h1 class="page-title">Welcome, <span id="welcomeName"></span></h1>
-    <p class="page-subtitle">Here is a quick look at what is available.</p>
+<div class="app">
+  <aside id="sidebar" class="sidebar"></aside>
+  <div class="main">
+    <header id="topbar" class="topbar"></header>
+    <main class="content">
+      <div class="welcome-banner">
+        <h1>Welcome back, <span id="welcomeName"></span> &#128075;</h1>
+        <p>Here is a quick look at what is happening in your college hub.</p>
+      </div>
 
-    <div class="stats-grid">
-      <div class="card stat-card"><div class="stat-number" id="statSubjects">-</div><div class="stat-label">Subjects</div></div>
-      <div class="card stat-card"><div class="stat-number" id="statResources">-</div><div class="stat-label">Resources</div></div>
-      <div class="card stat-card"><div class="stat-number" id="statAssignments">-</div><div class="stat-label">Assignments</div></div>
-      <div class="card stat-card"><div class="stat-number" id="statAnnouncements">-</div><div class="stat-label">Announcements</div></div>
-    </div>
+      <div class="stats-grid">
+        <div class="card stat-card" style="--i:0"><div class="stat-icon i1"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><div><div class="stat-number" id="statSubjects">0</div><div class="stat-label">Subjects</div></div></div>
+        <div class="card stat-card" style="--i:1"><div class="stat-icon i2"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div><div class="stat-number" id="statResources">0</div><div class="stat-label">Resources</div></div></div>
+        <div class="card stat-card" style="--i:2"><div class="stat-icon i3"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></div><div><div class="stat-number" id="statAssignments">0</div><div class="stat-label">Assignments</div></div></div>
+        <div class="card stat-card" style="--i:3"><div class="stat-icon i4"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><div><div class="stat-number" id="statAnnouncements">0</div><div class="stat-label">Announcements</div></div></div>
+      </div>
 
-    <h2 class="section-title">Latest Announcements</h2>
-    <div id="latestAnnouncements" class="list"><p class="empty">Loading...</p></div>
+      <h2 class="section-title">Latest Announcements</h2>
+      <div id="latestAnnouncements" class="list"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
 
-    <h2 class="section-title">Upcoming Assignments</h2>
-    <div id="upcomingAssignments" class="grid"><p class="empty">Loading...</p></div>
+      <h2 class="section-title">Upcoming Assignments</h2>
+      <div id="upcomingAssignments" class="grid"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
 
-    <h2 class="section-title">Upcoming on the Academic Calendar</h2>
-    <div id="upcomingCalendar" class="list"><p class="empty">Loading...</p></div>
-  </main>
-  <script src="js/script.js"></script>
+      <h2 class="section-title">Upcoming on the Academic Calendar</h2>
+      <div id="upcomingCalendar" class="list"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+    </main>
+  </div>
+</div>
+<script src="js/script.js"></script>
 </body>
 </html>

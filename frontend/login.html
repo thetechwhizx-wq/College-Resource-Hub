@@ -4,74 +4,86 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - College Resource Hub</title>
+  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="login">
-  <div class="login-wrapper">
-    <div class="card login-card">
-      <div class="tab-switch">
-        <button type="button" id="tabLoginBtn" class="tab-btn active">Login</button>
-        <button type="button" id="tabRegisterBtn" class="tab-btn">Create Account</button>
-      </div>
+  <div class="auth-wrap">
+    <section class="auth-hero">
+      <span class="shape s1"></span><span class="shape s2"></span><span class="shape s3"></span>
+      <div class="brand"><div class="brand-logo" style="background:rgba(255,255,255,.22);box-shadow:none"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg></div><div>College Resource Hub</div></div>
+      <h1>Study smarter.<br>Everything in one place.</h1>
+      <p>Sign in to reach your notes, PDFs, assignments and the academic calendar.</p>
+      <ul class="auth-points">
+        <li><span class="pt"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Notes, PDFs &amp; results</li>
+        <li><span class="pt"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span> Bookmark your favourites</li>
+        <li><span class="pt"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span> Never miss a deadline</li>
+      </ul>
+    </section>
 
-      <!-- LOGIN FORM -->
-      <div id="loginPanel">
-        <h2>Login</h2>
-        <div id="loginMessage" class="message"></div>
-        <form id="loginForm">
-          <div class="field">
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="you@college.edu" required>
-          </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Your password" required>
-          </div>
-          <button type="submit" class="btn">Login</button>
-        </form>
-        <div class="demo-box">
-          <strong>Demo accounts</strong><br>
-          Admin: admin@college.edu / admin123<br>
-          Student: student@college.edu / student123
+    <section class="auth-panel">
+      <div class="card login-card">
+        <div class="tab-switch">
+          <button type="button" id="tabLoginBtn" class="tab-btn active">Login</button>
+          <button type="button" id="tabRegisterBtn" class="tab-btn">Create Account</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="loginPanel">
+          <h2>Welcome back</h2>
+          <p class="sub">Log in to continue to your dashboard.</p>
+          <div id="loginMessage" class="message"></div>
+          <form id="loginForm">
+            <div class="field">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="you@college.edu" required>
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="Your password" required>
+            </div>
+            <button type="submit" class="btn btn-block">Login</button>
+          </form>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="registerPanel" class="hidden">
+          <h2>Create your account</h2>
+          <p class="sub">It takes less than a minute.</p>
+          <div id="registerMessage" class="message"></div>
+          <form id="registerForm">
+            <div class="field">
+              <label for="regName">Full name</label>
+              <input type="text" id="regName" required>
+            </div>
+            <div class="field">
+              <label for="regEmail">Email</label>
+              <input type="email" id="regEmail" placeholder="you@college.edu" required>
+            </div>
+            <div class="field">
+              <label for="regPassword">Password</label>
+              <input type="password" id="regPassword" minlength="6" placeholder="At least 6 characters" required>
+            </div>
+            <div class="field">
+              <label for="regRole">I am a</label>
+              <select id="regRole">
+                <option value="student">Student</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="field hidden" id="adminCodeField">
+              <label for="regAdminCode">Admin signup code</label>
+              <input type="text" id="regAdminCode" placeholder="Given by your project guide/instructor">
+            </div>
+            <button type="submit" class="btn btn-block">Create Account</button>
+          </form>
+          <div class="demo-box">Registering as Admin needs an admin signup code, so random visitors cannot give themselves admin access.</div>
         </div>
       </div>
-
-      <!-- REGISTER FORM -->
-      <div id="registerPanel" class="hidden">
-        <h2>Create Account</h2>
-        <div id="registerMessage" class="message"></div>
-        <form id="registerForm">
-          <div class="field">
-            <label for="regName">Full name</label>
-            <input type="text" id="regName" required>
-          </div>
-          <div class="field">
-            <label for="regEmail">Email</label>
-            <input type="email" id="regEmail" placeholder="you@college.edu" required>
-          </div>
-          <div class="field">
-            <label for="regPassword">Password</label>
-            <input type="password" id="regPassword" minlength="6" placeholder="At least 6 characters" required>
-          </div>
-          <div class="field">
-            <label for="regRole">I am a</label>
-            <select id="regRole">
-              <option value="student">Student</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div class="field hidden" id="adminCodeField">
-            <label for="regAdminCode">Admin signup code</label>
-            <input type="text" id="regAdminCode" placeholder="Given by your project guide/instructor">
-          </div>
-          <button type="submit" class="btn">Create Account</button>
-        </form>
-        <div class="demo-box">
-          Registering as Admin requires an admin signup code (set in backend/.env as ADMIN_SIGNUP_CODE)
-          so random visitors cannot grant themselves admin access.
-        </div>
-      </div>
-    </div>
+    </section>
   </div>
   <script src="js/script.js"></script>
 </body>

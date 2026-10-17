@@ -4,30 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Assignments - College Resource Hub</title>
+  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="assignments">
-  <header class="navbar">
-    <div class="nav-brand">College Resource Hub</div>
-    <nav class="nav-links">
-      <a href="dashboard.html" >Dashboard</a>
-      <a href="resources.html" >Resources</a>
-      <a href="assignments.html" class="active">Assignments</a>
-      <a href="announcements.html" >Announcements</a>
-      <a href="calendar.html" >Calendar</a>
-      <a href="bookmarks.html" >Bookmarks</a>
-      <a href="admin-dashboard.html" class="admin-only ">Admin Panel</a>
-    </nav>
-    <div class="nav-user">
-      <span id="navUserName"></span>
-      <button id="logoutBtn" class="btn btn-small">Logout</button>
-    </div>
-  </header>
-  <main class="container">
-    <h1 class="page-title">Assignments</h1>
-    <p class="page-subtitle">Sorted by deadline, earliest first.</p>
-    <div id="assignmentList" class="grid"><p class="empty">Loading...</p></div>
-  </main>
-  <script src="js/script.js"></script>
+<div class="app">
+  <aside id="sidebar" class="sidebar"></aside>
+  <div class="main">
+    <header id="topbar" class="topbar"></header>
+    <main class="content">
+      <h1 class="page-title">Assignments</h1>
+      <p class="page-subtitle">Sorted by deadline, earliest first.</p>
+      <div id="assignmentList" class="grid"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+    </main>
+  </div>
+</div>
+<script src="js/script.js"></script>
 </body>
 </html>

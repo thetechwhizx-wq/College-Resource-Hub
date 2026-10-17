@@ -4,69 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resources - College Resource Hub</title>
+  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-page="resources">
-  <header class="navbar">
-    <div class="nav-brand">College Resource Hub</div>
-    <nav class="nav-links">
-      <a href="dashboard.html" >Dashboard</a>
-      <a href="resources.html" class="active">Resources</a>
-      <a href="assignments.html" >Assignments</a>
-      <a href="announcements.html" >Announcements</a>
-      <a href="calendar.html" >Calendar</a>
-      <a href="bookmarks.html" >Bookmarks</a>
-      <a href="admin-dashboard.html" class="admin-only ">Admin Panel</a>
-    </nav>
-    <div class="nav-user">
-      <span id="navUserName"></span>
-      <button id="logoutBtn" class="btn btn-small">Logout</button>
-    </div>
-  </header>
-  <main class="container">
-    <h1 class="page-title">Study Resources</h1>
-    <p class="page-subtitle">Search and filter by semester, subject, unit or resource type.</p>
+<div class="app">
+  <aside id="sidebar" class="sidebar"></aside>
+  <div class="main">
+    <header id="topbar" class="topbar"></header>
+    <main class="content">
+      <h1 class="page-title">Study Resources</h1>
+      <p class="page-subtitle">Search and filter by semester, subject, unit or resource type.</p>
 
-    <div class="filter-grid">
-      <input type="text" id="searchInput" placeholder="Search by keyword...">
-      <select id="semesterFilter"><option value="">All semesters</option></select>
-      <select id="subjectFilter"><option value="">All subjects</option></select>
-      <select id="unitFilter"><option value="">All units</option></select>
-      <select id="typeFilter"><option value="">All types</option></select>
-    </div>
-    <p id="resultCount" class="item-meta" style="margin-bottom:12px"></p>
+      <div class="filter-grid">
+        <input type="text" id="searchInput" placeholder="Search by keyword...">
+        <select id="semesterFilter"><option value="">All semesters</option></select>
+        <select id="subjectFilter"><option value="">All subjects</option></select>
+        <select id="unitFilter"><option value="">All units</option></select>
+        <select id="typeFilter"><option value="">All types</option></select>
+      </div>
+      <p id="resultCount" class="item-meta" style="margin-bottom:14px"></p>
 
-    <div id="resourceList" class="grid"><p class="empty">Loading...</p></div>
-  </main>
-
-  <!-- Report modal (hidden until a "Report issue" button is clicked) -->
-  <div id="reportModal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h3>Report a problem</h3>
-      <p class="item-meta" id="reportResourceLabel" style="margin-bottom:10px"></p>
-      <div id="reportMessage" class="message"></div>
-      <form id="reportForm">
-        <div class="field">
-          <label for="reportReason">What's wrong?</label>
-          <select id="reportReason">
-            <option>Outdated</option>
-            <option>Incorrect / wrong file</option>
-            <option>Link not working</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="reportComment">Details (optional)</label>
-          <input type="text" id="reportComment" placeholder="Any extra detail for the admin">
-        </div>
-        <div class="modal-actions">
-          <button type="button" id="reportCancelBtn" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn">Submit report</button>
-        </div>
-      </form>
-    </div>
+      <div id="resourceList" class="grid"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+    </main>
   </div>
+</div>
 
-  <script src="js/script.js"></script>
+<!-- Report modal (hidden until a "Report issue" button is clicked) -->
+<div id="reportModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3>Report a problem</h3>
+    <p class="item-meta" id="reportResourceLabel" style="margin-bottom:12px"></p>
+    <div id="reportMessage" class="message"></div>
+    <form id="reportForm">
+      <div class="field">
+        <label for="reportReason">What's wrong?</label>
+        <select id="reportReason">
+          <option>Outdated</option>
+          <option>Incorrect / wrong file</option>
+          <option>Link not working</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="reportComment">Details (optional)</label>
+        <input type="text" id="reportComment" placeholder="Any extra detail for the admin">
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="reportCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn">Submit report</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="js/script.js"></script>
 </body>
 </html>
