@@ -34,7 +34,7 @@ function getAdminSignupCode() {
 
 // ---------- GLOBAL MIDDLEWARE ----------
 app.use(cors());          // lets a page served from another port (e.g. Live Server :5500) call this API
-app.use(express.json({ limit: "8mb" })); // read JSON bodies; 8 MB leaves room for a 5 MB PDF sent as base64 text
+app.use(express.json({ limit: "8mb" })); // read JSON bodies; 8 MB leaves room for a 5 MB file sent as base64 text
 
 // Serve the frontend folder too. That means the whole app can be opened at
 // http://localhost:3000  - no Live Server needed (handy for the viva demo).
@@ -147,6 +147,9 @@ function createCrudRoutes(basePath, Model) {
     try {
       const deleted = await Model.findByIdAndDelete(req.params.id);
       if (!deleted) return res.status(404).json({ message: "Item not found." });
+      // If this item had a PDF/photo attached (assignment, announcement, calendar event), delete it too
+      // so no orphan files pile up inside the database.
+      if (deleted.fileId) await UploadedFile.findByIdAndDelete(deleted.fileId);
       res.json({ message: "Deleted successfully." });
     } catch (err) {
       res.status(400).json({ message: err.message });
@@ -154,38 +157,51 @@ function createCrudRoutes(basePath, Model) {
   });
 }
 
-// ---------- PDF FILES (notes, results...) ----------
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per PDF
+// ---------- FILES (PDFs and photos) ----------
+const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per file
 
-// POST /api/files   body: { name, data }   (data = the PDF as base64 text) - admin only
+// Looks at the first bytes of the file to find out what it REALLY is.
+// We never trust the file name or what the browser says, because both can be faked.
+// Every real PDF starts with "%PDF", every JPEG with FF D8 FF, every PNG with 89 50 4E 47 0D 0A 1A 0A.
+function detectFileType(buffer) {
+  if (buffer.slice(0, 4).toString() === "%PDF") return "application/pdf";
+  if (buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg";
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (buffer.length > 7 && buffer.slice(0, 8).equals(pngSignature)) return "image/png";
+  return null; // anything else is rejected
+}
+
+// POST /api/files   body: { name, data }   (data = the file as base64 text) - admin only
 app.post("/api/files", verifyToken, adminOnly, async (req, res) => {
   try {
-    const name = String(req.body.name || "document.pdf").slice(0, 150);
+    const name = String(req.body.name || "file").slice(0, 150);
     const buffer = Buffer.from(String(req.body.data || ""), "base64");
 
     if (!buffer.length) return res.status(400).json({ message: "No file received." });
-    if (buffer.length > MAX_FILE_BYTES) return res.status(413).json({ message: "PDF is too large (max 5 MB)." });
-    // Every real PDF starts with the text "%PDF" - this stops other file types being sneaked in
-    if (buffer.slice(0, 4).toString() !== "%PDF") {
-      return res.status(400).json({ message: "Only valid PDF files are allowed." });
+    if (buffer.length > MAX_FILE_BYTES) return res.status(413).json({ message: "File is too large (max 5 MB)." });
+
+    const contentType = detectFileType(buffer);
+    if (!contentType) {
+      return res.status(400).json({ message: "Only PDF, JPG or PNG files are allowed." });
     }
 
-    const saved = await UploadedFile.create({ name: name, size: buffer.length, data: buffer });
-    res.status(201).json({ id: saved._id, name: saved.name, size: saved.size });
+    const saved = await UploadedFile.create({ name: name, contentType: contentType, size: buffer.length, data: buffer });
+    res.status(201).json({ id: saved._id, name: saved.name, size: saved.size, contentType: saved.contentType });
   } catch (err) {
     console.error("Upload error:", err.message);
     res.status(500).json({ message: "Could not save the file." });
   }
 });
 
-// GET /api/files/:id - any logged-in user can view a PDF
+// GET /api/files/:id - any logged-in user can view a file (PDF or photo)
 app.get("/api/files/:id", verifyToken, async (req, res) => {
   try {
     const file = await UploadedFile.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found." });
     res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": "inline; filename*=UTF-8''" + encodeURIComponent(file.name)
+      "Content-Type": file.contentType || "application/pdf", // files saved before photos existed have no type -> they are PDFs
+      "Content-Disposition": "inline; filename*=UTF-8''" + encodeURIComponent(file.name),
+      "X-Content-Type-Options": "nosniff" // the browser must trust our Content-Type and not guess
     });
     res.send(file.data);
   } catch (err) {

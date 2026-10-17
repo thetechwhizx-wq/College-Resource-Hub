@@ -10,7 +10,9 @@ const calendarEventSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   date: { type: String, required: true },  // "YYYY-MM-DD"
   category: { type: String, enum: CALENDAR_CATEGORIES, default: "Other" },
-  description: { type: String, default: "", trim: true }
+  description: { type: String, default: "", trim: true },
+  fileId: { type: mongoose.Schema.Types.ObjectId, ref: "UploadedFile" }, // optional time table (PDF or photo)
+  fileName: { type: String, default: "" }                               // its original name
 });
 
 module.exports = mongoose.model("CalendarEvent", calendarEventSchema);

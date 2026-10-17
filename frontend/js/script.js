@@ -273,7 +273,7 @@ function initReveal() {
   });
 }
 
-// PDFs are protected by the login token, so a plain <a href> cannot open them.
+// Uploaded files (PDFs and photos) are protected by the login token, so a plain <a href> cannot open them.
 // Instead we fetch the file WITH the token, turn it into a temporary blob URL and open that.
 document.addEventListener("click", async function (event) {
   const btn = event.target.closest("[data-file-id]");
@@ -283,7 +283,7 @@ document.addEventListener("click", async function (event) {
     const response = await fetch(API_BASE + "/api/files/" + btn.dataset.fileId, {
       headers: { Authorization: "Bearer " + getToken() }
     });
-    if (!response.ok) throw new Error("Could not load the PDF.");
+    if (!response.ok) throw new Error("Could not load the file.");
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     if (win) win.location.href = url; else window.location.href = url;
@@ -293,13 +293,15 @@ document.addEventListener("click", async function (event) {
   }
 });
 
-// Reads the PDF chosen in the admin form, validates it, uploads it, and returns { id, name } (or null if none chosen)
-async function uploadSelectedPdf() {
-  const input = document.getElementById("resourceFile");
+// Reads the file chosen in an admin form (PDF, JPG or PNG), checks it, uploads it,
+// and returns { id, name } - or null when no file was chosen (attachments are always optional).
+// The server checks the real file type again, because anyone can bypass checks done in the browser.
+async function uploadSelectedFile(inputId) {
+  const input = document.getElementById(inputId);
   const file = input && input.files[0];
   if (!file) return null;
-  if (!file.name.toLowerCase().endsWith(".pdf")) throw new Error("Only PDF files are allowed.");
-  if (file.size > 5 * 1024 * 1024) throw new Error("PDF is too large (max 5 MB).");
+  if (!/\.(pdf|jpe?g|png)$/i.test(file.name)) throw new Error("Only PDF, JPG or PNG files are allowed.");
+  if (file.size > 5 * 1024 * 1024) throw new Error("File is too large (max 5 MB).");
 
   const base64 = await new Promise(function (resolve, reject) {
     const reader = new FileReader();
@@ -308,6 +310,123 @@ async function uploadSelectedPdf() {
     reader.readAsDataURL(file);
   });
   return apiFetch("/api/files", { method: "POST", body: JSON.stringify({ name: file.name, data: base64 }) });
+}
+
+// "image" for a photo, "pdf" for everything else (files uploaded before photos existed are all PDFs)
+function fileKind(fileName) {
+  return /\.(jpe?g|png)$/i.test(fileName || "") ? "image" : "pdf";
+}
+
+// ---------- Details pop-up (assignments, announcements, calendar events) ----------
+// A card becomes clickable only when it has something extra to show: a file, or (for assignments and
+// announcements) a longer description. This object remembers the item behind each clickable card
+// so the pop-up knows what to display.
+const detailItems = {};
+let detailBlobUrl = null;
+
+function hasDetails(kind, item) {
+  // A calendar event already shows its short description on the card, so only a file makes it clickable.
+  return kind === "calendar" ? !!item.fileId : !!(item.description || item.fileId);
+}
+
+// Opening tag of a card: clickable (and keyboard-focusable) only if there is something to open
+function cardOpenTag(kind, item, extraClass) {
+  const classes = "card" + (extraClass ? " " + extraClass : "");
+  if (!hasDetails(kind, item)) return '<div class="' + classes + '">';
+  detailItems[item._id] = { kind: kind, item: item };
+  return '<div class="' + classes + ' clickable" data-detail-id="' + escapeHtml(item._id) + '" tabindex="0" role="button">';
+}
+
+// Small line at the bottom of a clickable card that says exactly what will open
+function detailHint(kind, item) {
+  if (!hasDetails(kind, item)) return "";
+  let label = "Read more";
+  if (item.fileId && item.description) label = "View details";
+  else if (item.fileId) label = fileKind(item.fileName) === "image" ? "View photo" : "View PDF";
+  return '<p class="detail-hint">' + icon("file") + escapeHtml(label) + "</p>";
+}
+
+function detailMetaHtml(kind, item) {
+  if (kind === "assignment") return '<span class="badge">' + escapeHtml(item.subject) + "</span> Deadline: " + escapeHtml(formatDate(item.deadline));
+  if (kind === "calendar") return '<span class="badge cat-' + escapeHtml(item.category) + '">' + escapeHtml(item.category) + "</span> " + escapeHtml(formatDate(item.date));
+  return "Posted on " + escapeHtml(formatDate(item.date));
+}
+
+function closeDetailModal() {
+  const overlay = document.getElementById("detailOverlay");
+  if (overlay) overlay.remove();
+  if (detailBlobUrl) { URL.revokeObjectURL(detailBlobUrl); detailBlobUrl = null; }
+}
+
+// Photos are shown right inside the pop-up (fetched with the login token, shown as a temporary blob URL)
+async function loadDetailImage(fileId, holder) {
+  try {
+    const response = await fetch(API_BASE + "/api/files/" + fileId, { headers: { Authorization: "Bearer " + getToken() } });
+    if (!response.ok) throw new Error("load failed");
+    const blob = await response.blob();
+    if (!holder.isConnected) return; // the pop-up was closed while the photo was loading
+    detailBlobUrl = URL.createObjectURL(blob);
+    holder.innerHTML = '<img class="detail-img" alt="Attached photo" src="' + detailBlobUrl + '">';
+  } catch (err) {
+    holder.innerHTML = '<p class="item-meta">Could not load the photo.</p>';
+  }
+}
+
+function openDetailModal(kind, item) {
+  closeDetailModal();
+  const isImage = !!item.fileId && fileKind(item.fileName) === "image";
+
+  let html =
+    '<div class="detail-head"><div>' +
+      "<h3>" + escapeHtml(item.title) + "</h3>" +
+      '<p class="item-meta">' + detailMetaHtml(kind, item) + "</p>" +
+    '</div><button type="button" class="detail-close" data-detail-close aria-label="Close">\u00d7</button></div>';
+
+  if (item.description) html += '<p class="detail-desc">' + escapeHtml(item.description) + "</p>";
+
+  if (item.fileId) {
+    html += '<div class="detail-file">';
+    if (isImage) html += '<div id="detailImageHolder"><p class="item-meta">Loading photo...</p></div>';
+    html += '<button type="button" class="btn ' + (isImage ? "btn-ghost" : "") + '" data-file-id="' + escapeHtml(item.fileId) + '">' +
+      icon("file") + (isImage ? " Open full size" : " Open PDF") + "</button></div>";
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "detailOverlay";
+  overlay.innerHTML = '<div class="modal-box detail-box" role="dialog" aria-modal="true">' + html + "</div>";
+  document.body.appendChild(overlay);
+
+  if (isImage) loadDetailImage(item.fileId, document.getElementById("detailImageHolder"));
+}
+
+// One listener for every page: open on card click, close on X / click outside / Escape key
+document.addEventListener("click", function (event) {
+  if (event.target.closest("[data-detail-close]")) { closeDetailModal(); return; }
+  if (event.target.id === "detailOverlay") { closeDetailModal(); return; } // click on the dark background
+  const card = event.target.closest("[data-detail-id]");
+  if (!card) return;
+  const entry = detailItems[card.dataset.detailId];
+  if (entry) openDetailModal(entry.kind, entry.item);
+});
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") closeDetailModal();
+  // Enter or Space on a focused card does the same as a click (keyboard users)
+  if ((event.key === "Enter" || event.key === " ") && event.target.matches && event.target.matches("[data-detail-id]")) {
+    event.preventDefault();
+    event.target.click();
+  }
+});
+
+// Admin tables: a "Text" badge when there is a description, and a button to preview the attached file
+function attachmentCellHtml(item, showTextBadge) {
+  const parts = [];
+  if (showTextBadge && item.description) parts.push('<span class="badge">Text</span>');
+  if (item.fileId) {
+    parts.push('<button type="button" class="btn btn-small btn-ghost" data-file-id="' + escapeHtml(item.fileId) + '">' +
+      icon("file") + (fileKind(item.fileName) === "image" ? " Photo" : " PDF") + "</button>");
+  }
+  return parts.length ? parts.join(" ") : "-";
 }
 
 // "Open link" and "View PDF" buttons for a resource (shared by Resources + Bookmarks pages)
@@ -373,20 +492,22 @@ function bookmarkCardHtml(r) {
 function assignmentCardHtml(a) {
   const overdue = a.deadline < todayString();
   return (
-    '<div class="card">' +
+    cardOpenTag("assignment", a) +
       '<div class="item-title">' + escapeHtml(a.title) + "</div>" +
       '<p class="item-meta"><span class="badge">' + escapeHtml(a.subject) + "</span></p>" +
       '<p class="item-meta" style="margin-top:6px">Deadline: ' + escapeHtml(formatDate(a.deadline)) +
       (overdue ? ' <span class="badge overdue">Overdue</span>' : "") + "</p>" +
+      detailHint("assignment", a) +
     "</div>"
   );
 }
 
 function announcementCardHtml(a) {
   return (
-    '<div class="card">' +
+    cardOpenTag("announcement", a) +
       '<div class="item-title">' + escapeHtml(a.title) + "</div>" +
       '<p class="item-meta">Posted on ' + escapeHtml(formatDate(a.date)) + "</p>" +
+      detailHint("announcement", a) +
     "</div>"
   );
 }
@@ -396,12 +517,13 @@ function calendarItemHtml(e) {
   const day = isNaN(d.getTime()) ? "?" : d.getDate();
   const mon = isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-IN", { month: "short", timeZone: "UTC" });
   return (
-    '<div class="card calendar-item">' +
+    cardOpenTag("calendar", e, "calendar-item") +
       '<div class="calendar-date-box"><div class="day">' + day + '</div><div class="mon">' + escapeHtml(mon) + "</div></div>" +
       "<div>" +
         '<div class="item-title">' + escapeHtml(e.title) + "</div>" +
         '<p class="item-meta"><span class="badge cat-' + escapeHtml(e.category) + '">' + escapeHtml(e.category) + "</span></p>" +
         (e.description ? '<p class="item-meta" style="margin-top:4px">' + escapeHtml(e.description) + "</p>" : "") +
+        detailHint("calendar", e) +
       "</div>" +
     "</div>"
   );
@@ -782,17 +904,17 @@ async function loadAdminData() {
     }), 8, "No resources yet.");
 
     fillTable("assignmentRows", assignments.map(function (a) {
-      return "<tr><td>" + escapeHtml(a.title) + "</td><td>" + escapeHtml(a.subject) + "</td><td>" + escapeHtml(formatDate(a.deadline)) + "</td><td>" + deleteButtonHtml("assignments", a._id) + "</td></tr>";
-    }), 4, "No assignments yet.");
+      return "<tr><td>" + escapeHtml(a.title) + "</td><td>" + escapeHtml(a.subject) + "</td><td>" + escapeHtml(formatDate(a.deadline)) + "</td><td>" + attachmentCellHtml(a, true) + "</td><td>" + deleteButtonHtml("assignments", a._id) + "</td></tr>";
+    }), 5, "No assignments yet.");
 
     fillTable("announcementRows", announcements.map(function (a) {
-      return "<tr><td>" + escapeHtml(a.title) + "</td><td>" + escapeHtml(formatDate(a.date)) + "</td><td>" + deleteButtonHtml("announcements", a._id) + "</td></tr>";
-    }), 3, "No announcements yet.");
+      return "<tr><td>" + escapeHtml(a.title) + "</td><td>" + escapeHtml(formatDate(a.date)) + "</td><td>" + attachmentCellHtml(a, true) + "</td><td>" + deleteButtonHtml("announcements", a._id) + "</td></tr>";
+    }), 4, "No announcements yet.");
 
     fillTable("calendarRows", events.map(function (e) {
       return "<tr><td>" + escapeHtml(e.title) + "</td><td><span class=\"badge cat-" + escapeHtml(e.category) + "\">" + escapeHtml(e.category) + "</span></td><td>" +
-        escapeHtml(formatDate(e.date)) + "</td><td>" + escapeHtml(e.description) + "</td><td>" + deleteButtonHtml("calendar-events", e._id) + "</td></tr>";
-    }), 5, "No calendar events yet.");
+        escapeHtml(formatDate(e.date)) + "</td><td>" + escapeHtml(e.description) + "</td><td>" + attachmentCellHtml(e, false) + "</td><td>" + deleteButtonHtml("calendar-events", e._id) + "</td></tr>";
+    }), 6, "No calendar events yet.");
 
     fillTable("reportRows", reports.map(function (r) {
       const statusBadge = '<span class="badge status-' + r.status + '">' + escapeHtml(r.status) + "</span>";
@@ -877,7 +999,7 @@ async function initAdminPage() {
     return { name: f.elements["name"].value, semester: Number(f.elements["semester"].value) };
   });
   setupAddForm("resourceForm", "/api/resources", async function (f) {
-    const uploaded = await uploadSelectedPdf(); // null when no PDF was chosen
+    const uploaded = await uploadSelectedFile("resourceFile"); // null when no file was chosen
     // Auto-fill semester from the chosen subject's <option data-semester="..."> so it always matches the Subject.
     const subjectSelect = document.getElementById("resourceSubject");
     const chosenOption = subjectSelect.options[subjectSelect.selectedIndex];
@@ -892,14 +1014,38 @@ async function initAdminPage() {
       fileName: uploaded ? uploaded.name : ""
     };
   });
-  setupAddForm("assignmentForm", "/api/assignments", function (f) {
-    return { title: f.elements["title"].value, subject: f.elements["subject"].value, deadline: f.elements["deadline"].value };
+  // The three forms below share one pattern: upload the optional file first, then save the item with the file's id.
+  setupAddForm("assignmentForm", "/api/assignments", async function (f) {
+    const uploaded = await uploadSelectedFile("assignmentFile"); // null when no file was chosen
+    return {
+      title: f.elements["title"].value,
+      subject: f.elements["subject"].value,
+      deadline: f.elements["deadline"].value,
+      description: f.elements["description"].value,
+      fileId: uploaded ? uploaded.id : undefined,
+      fileName: uploaded ? uploaded.name : ""
+    };
   });
-  setupAddForm("announcementForm", "/api/announcements", function (f) {
-    return { title: f.elements["title"].value, date: f.elements["date"].value };
+  setupAddForm("announcementForm", "/api/announcements", async function (f) {
+    const uploaded = await uploadSelectedFile("announcementFile");
+    return {
+      title: f.elements["title"].value,
+      date: f.elements["date"].value,
+      description: f.elements["description"].value,
+      fileId: uploaded ? uploaded.id : undefined,
+      fileName: uploaded ? uploaded.name : ""
+    };
   });
-  setupAddForm("calendarForm", "/api/calendar-events", function (f) {
-    return { title: f.elements["title"].value, category: f.elements["category"].value, date: f.elements["date"].value, description: f.elements["description"].value };
+  setupAddForm("calendarForm", "/api/calendar-events", async function (f) {
+    const uploaded = await uploadSelectedFile("calendarFile");
+    return {
+      title: f.elements["title"].value,
+      category: f.elements["category"].value,
+      date: f.elements["date"].value,
+      description: f.elements["description"].value,
+      fileId: uploaded ? uploaded.id : undefined,
+      fileName: uploaded ? uploaded.name : ""
+    };
   });
 
   // Delete buttons (event delegation, works for rows redrawn later too)
